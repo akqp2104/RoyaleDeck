@@ -1,69 +1,65 @@
 # RoyaleDeck
 
+Preparación de mazos compatibles para las guerras de clanes de Clash Royale.
+
+## Contexto del juego
+
+Clash Royale es un videojuego de estrategia en tiempo real: los dos jugadores actúan simultáneamente, sin esperar turnos. Cada uno defiende sus torres e intenta destruir las del contrario utilizando cartas digitales.
+
+Una **carta** representa un recurso que se puede utilizar durante la partida:
+
+- **Tropas:** unidades que aparecen en el campo de batalla y se desplazan para atacar, como un caballero o un grupo de arqueras.
+- **Edificios:** estructuras que se colocan en una posición, por ejemplo un cañón defensivo.
+- **Hechizos:** efectos que se aplican sobre una zona o unos objetivos, como una bola de fuego que causa daño.
+
+Antes del combate, cada jugador prepara un **mazo de ocho cartas diferentes**. Durante la partida utiliza las cartas que tiene disponibles en la mano; al jugar una, entra otra del mazo. Las cartas vuelven a estar disponibles a lo largo del combate: utilizarlas no las elimina de la colección. Jugar una carta consume **elixir**, un recurso que se recupera con el tiempo. Por eso importa tanto qué cartas se eligen como cuándo y dónde se utilizan. Supercell explica este recurso en su [documentación sobre el elixir](https://support.supercell.com/clash-royale/es/articles/elixir.html).
+
+La **colección** es el conjunto de cartas que un jugador ha conseguido. Cada carta tiene un **nivel de mejora**, que influye en sus características durante el combate. El nivel no cambia su identidad: dos cartas de Caballero con niveles distintos siguen siendo la misma carta a efectos de las restricciones de los mazos.
+
+Un **clan** es un grupo de jugadores. En las **guerras de clanes**, sus miembros participan en combates para contribuir al resultado del grupo. Cada jugador puede preparar cuatro mazos, pero **ninguna carta puede repetirse entre ellos**: completarlos requiere 32 cartas distintas. Son cuatro combinaciones para distintos combates, no un único mazo de 32 cartas. Esta condición se recoge en las [reglas oficiales de los mazos de guerra](https://support.supercell.com/clash-royale/es/articles/war-decks-1.html).
+
 ## Descripción del problema
 
-Modificar un mazo de Clash Royale exige considerar cómo afecta cada cambio al conjunto. Una sustitución puede cubrir una carencia y, al mismo tiempo, aumentar demasiado el coste de elixir o eliminar una capacidad que se quería conservar.
+Juego a Clash Royale y tanto mis amigos como yo hemos tenido dificultades al preparar los mazos para las guerras de clanes. Tenemos combinaciones que conocemos o que hemos visto utilizar a otros jugadores, pero varias de ellas necesitan las mismas cartas y no podemos utilizarlas juntas.
 
-El problema consiste en determinar qué cambios permiten cubrir las necesidades del jugador utilizando las cartas disponibles, respetando las que desea mantener y su límite de coste medio de elixir. Se busca alterar lo menos posible el mazo original e identificar qué condiciones habría que reconsiderar cuando no puedan cumplirse todas.
+La dificultad aparece al elegir esos mazos por separado. Dos combinaciones que nos interesan pueden compartir una carta y obligarnos a descartar una de ellas. La alternativa que encontramos puede entrar en conflicto con un tercer mazo. Por ejemplo, dos mazos que contienen el hechizo Bola de Fuego no pueden formar parte del mismo conjunto de guerra, aunque sus otras siete cartas sean diferentes.
 
-Este problema parte de mi experiencia como jugadora. La ficha del cliente recoge el contexto y las dificultades que motivan el proyecto.
+Acabamos revisando combinaciones y cambiando elecciones anteriores para intentar completar los cuatro mazos. Resolver un conflicto entre dos no basta: una pareja compatible puede impedir completar el conjunto con las demás alternativas que nos interesan. Sustituir cartas sueltas tampoco nos resulta equivalente, porque altera las combinaciones que queríamos utilizar.
 
-## Alcance
+Lo que necesitamos es poder preparar los cuatro mazos sin cartas repetidas entre ellos, aprovechando combinaciones que estemos dispuestos a jugar. No nos sirve reunir cuatro mazos cualesquiera si no conocemos su funcionamiento o no tenemos las cartas necesarias. Si queremos mantener uno concreto, esa preferencia también condiciona las alternativas restantes.
 
-Las necesidades consideradas deberán expresarse mediante características comprobables de las cartas: coste de elixir, tipo y objetivos a los que pueden atacar.
+Cuando nuestras opciones no permiten completar los cuatro, necesitamos entender qué elecciones entran en conflicto y cuántos mazos podemos reunir sin reconsiderarlas. La dificultad que se aborda es decidir qué combinaciones pueden convivir en una misma preparación de guerra. La valoración de su eficacia en combate y de los niveles de las cartas queda fuera de este problema.
 
-La cobertura de un objetivo significa que el mazo contiene cartas capaces de atacarlo, pero no garantiza que puedan derrotar cualquier amenaza de ese tipo. El proyecto tampoco pretende predecir victorias ni identificar un mazo universalmente superior.
+## Datos y procedencia
 
-Los niveles de las cartas no se utilizarán para estimar resultados de combate. El jugador podrá indicar qué cartas quiere conservar por tenerlas mejoradas y cuáles acepta considerar como sustitutas.
+La fuente disponible de composiciones de mazos es el archivo [BattlesStaging_01012021_WL_tagged.csv](https://huggingface.co/datasets/Grandediw/clash-royale-battle/blob/main/BattlesStaging_01012021_WL_tagged.csv), publicado por Grandediw en el conjunto [Clash Royale Battle](https://huggingface.co/datasets/Grandediw/clash-royale-battle).
 
-El alcance inicial se limitará a las cartas cuyos atributos necesarios estén verificados en la versión del catálogo utilizada. No se asumirá que ese catálogo refleja todas las modificaciones posteriores del juego.
+La muestra preparada en [data/partidas.csv](data/partidas.csv) contiene 16.126 partidas del 31 de diciembre de 2020. En ella aparecen 15.941 combinaciones distintas de ocho cartas. Se ha comprobado que contiene conjuntos de cuatro mazos sin cartas compartidas. Esto acredita que hay ejemplos de compatibilidad en los datos, pero no que esos conjuntos coincidan con las preferencias de un jugador concreto.
 
-## Procedencia de los datos
+Los archivos contienen la información necesaria para reconocer las cartas de cada mazo:
 
-### Catálogo de cartas
+| Archivo y campos | Información disponible y relación con el problema |
+| --- | --- |
+| CSV: `winner.card1.id` a `winner.card8.id` | Las ocho cartas del mazo de uno de los participantes. |
+| CSV: `loser.card1.id` a `loser.card8.id` | Las ocho cartas del mazo del otro participante. |
+| JSON: `id` y `name` | Correspondencia entre cada identificador y el nombre de la carta, para interpretar qué cartas comparten dos mazos. |
 
-Se utilizará el conjunto [Clash Royale Cards Data, de Nitesh Kakkar](https://www.kaggle.com/datasets/niteshkakkar/clash-royal-cards-data). La versión consultada fue actualizada el 30 de octubre de 2025 y contiene los archivos `clash_royale_cards_1.json` y `clash_royale_cards.xlsx`.
+La igualdad de identificadores permite reconocer una misma carta aunque aparezca en posiciones diferentes. El orden de las ocho cartas no convierte una combinación en un mazo distinto. Los resultados de las partidas, las copas y los niveles registrados no acreditan que un mazo sea adecuado para una persona concreta.
 
-El JSON incluye 120 registros dentro de una lista denominada `items`. Los campos relevantes son:
+Por ejemplo, en la muestra aparece la combinación Knight, Princess, Ice Spirit, Goblin Gang, Inferno Tower, Rocket, Goblin Barrel y The Log. Cualquier otro mazo que contenga Knight será incompatible con ella dentro del mismo conjunto de guerra, con independencia del resultado de las partidas en las que se hayan utilizado.
 
-| Campo | Información |
-|---|---|
-| `id` | Identificador de la carta |
-| `name` | Nombre |
-| `elixirCost` | Coste de elixir |
-| `type` | Tipo de carta |
-| `targets` | Objetivos a los que puede atacar |
+Los nombres proceden del archivo [clash_royale_cards_1.json](https://huggingface.co/datasets/Nitesh-04/Clash-Royale-Cards-Data/blob/main/clash_royale_cards_1.json), publicado por Nitesh Kakkar. La correspondencia necesaria está preparada en [data/cartas.json](data/cartas.json). La procedencia de las extracciones y las licencias declaradas se detallan en [data/FUENTES.md](data/FUENTES.md).
 
-Por ejemplo, el registro de Knight contiene el identificador `26000000`, un coste de elixir de `3`, el tipo `troop` y el objetivo `ground`.
+La muestra es histórica: acredita que esas combinaciones se utilizaron en las partidas registradas, pero no que sean recomendaciones competitivas actuales. Las cartas que componen cada mazo permiten comprobar si dos combinaciones tienen cartas en común. Los archivos no contienen nuestras preferencias ni nuestra colección personal.
 
-Los atributos ausentes o ambiguos no se completarán con valores inventados. Los registros que no permitan comprobar las condiciones del problema quedarán fuera del alcance hasta que puedan verificarse.
+Las composiciones y los nombres están disponibles en archivos CSV y JSON descargables. El estudio de las coincidencias entre sus cartas no requiere información en tiempo real del juego ni consultas a cuentas personales.
 
-El conjunto declara licencia CC BY-NC-SA 4.0. Se conservarán la atribución al autor, la referencia a la licencia y la indicación de las modificaciones realizadas, respetando sus condiciones de uso no comercial y de distribución de adaptaciones. No se incorporarán las imágenes enlazadas desde el catálogo.
+## Contexto de uso y despliegue en la nube
 
-La copia utilizada se incluirá en el repositorio junto con su procedencia y versión.
+La preparación de los mazos está vinculada a un juego móvil y la dificultad afecta a distintos jugadores, cada uno con sus preferencias. Consultar las mismas referencias desde sus dispositivos, sin tener que descargar y preparar los archivos de datos, hace razonable un despliegue en la nube. Las decisiones sobre la tecnología y el funcionamiento concreto corresponden a objetivos posteriores.
 
-### Información aportada por el jugador
+## Documentación
 
-Para describir su caso, el jugador indicará:
-
-- Las ocho cartas de su mazo actual.
-- Las cartas que quiere conservar.
-- Las cartas disponibles que acepta considerar como sustitutas.
-- Las condiciones que necesita cumplir, como el límite de coste medio de elixir y la cobertura de objetivos.
-
-No será necesario introducir estadísticas, historiales de partidas ni toda la colección. Las alternativas se limitarán a las cartas indicadas por el jugador.
-
-Los datos de referencia necesarios estarán dentro del repositorio. El funcionamiento no dependerá de consultas a APIs ni de bases de datos externas.
-
-## Justificación del despliegue en la nube
-
-El problema afecta a jugadores con diferentes colecciones y restricciones, pero que utilizan un mismo catálogo de referencia.
-
-El despliegue en la nube resulta adecuado para ofrecer el análisis de combinaciones desde sus dispositivos, manteniendo una versión común de los datos y evitando que cada jugador tenga que instalar y mantener un entorno de ejecución.
-
-La dificultad requiere valorar conjuntamente las restricciones y los efectos de varias sustituciones. Por ello, el servicio previsto tendría una responsabilidad de procesamiento que va más allá de almacenar y consultar cartas.
-
-## Imágenes relacionadas con las fichas del problema y la configuración de git
-
-- [Fotografía de la ficha del cliente](media/cliente.jpg).
 - [Configuración del repositorio](config/configuracion.md).
+
+![Fotografía de la ficha del cliente](media/cliente.jpg)
