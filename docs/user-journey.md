@@ -1,4 +1,4 @@
-# User journey 1: Preparar cuatro mazos para una guerra de clan
+# User journey: Preparar cuatro mazos para una guerra de clan
 
 ## Perfil de usuario
 
