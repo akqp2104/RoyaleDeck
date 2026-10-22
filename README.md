@@ -60,6 +60,8 @@ La preparación de los mazos está vinculada a un juego móvil y la dificultad a
 
 ## Documentación
 
+- [Perfil del jugador y recorrido de uso](docs/user-journey.md).
+- [Conceptos del juego y del problema](docs/conceptos.md).
 - [Configuración del repositorio](config/configuracion.md).
 
 ![Fotografía de la ficha del cliente](media/cliente.jpg)
